@@ -16,39 +16,26 @@
 
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
+using VRC.Udon;
 
 namespace OttrOne.UdonToolbox
 {
-	/// <summary>
-	/// This script toggles ingame items depending if a player enters or leaves the area of a trigger collider
-	/// 
-	/// Example usages are mirrors that only activate in certain areas.
-	/// </summary>
-	[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-	public class ColliderTrigger : UdonSharpBehaviour
-	{
-		public GameObject[] Targets;
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    public class SimpleInteract : UdonSharpBehaviour
+    {
+        [TextArea, SerializeField]
+        private string CustomEventName;
 
-		public override void OnPlayerTriggerEnter(VRCPlayerApi player)
-		{
-			this.Toggle(player);
-		}
+        [SerializeField]
+        private UdonBehaviour Target;
 
-		public override void OnPlayerTriggerExit(VRCPlayerApi player)
-		{
-			this.Toggle(player);
-		}
+        [SerializeField]
+        private bool SendOverNetwork;
 
-		private void Toggle(VRCPlayerApi player)
+        public override void Interact()
         {
-			if (player.isLocal)
-			{
-				foreach (GameObject target in Targets)
-				{
-					target.SetActive(!target.activeSelf);
-				}
-			}
-		}
-	}
+            if (SendOverNetwork) Target.SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, CustomEventName);
+            else Target.SendCustomEvent(CustomEventName);
+        }
+    }
 }

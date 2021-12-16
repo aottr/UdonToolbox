@@ -26,64 +26,71 @@ namespace OttrOne.UdonToolbox
     {
         public GameObject[] Targets;
 
-        [UdonSynced, FieldChangeCallback(nameof(SyncedState))]
+        [UdonSynced]
         public bool State;
-        public bool SyncedState
-        {
-            set
-            {
-                State = value;
-                foreach (GameObject target in Targets)
-                {
-                    target.SetActive(value);
-                }
-            }
-            get => State;
-        }
 
         /// <summary>
         /// React to interaction events on the parent gameobject
         /// </summary>
         public override void Interact()
         {
-            Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-            this.Toggle();
+            this._Toggle();
+        }
+
+        private void OwnershipTransferAndSync()
+        {
+            if (!Networking.LocalPlayer.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            RequestSerialization();
+        }
+
+        private void SetActiveStates()
+        {
+            foreach (GameObject target in Targets)
+            {
+                target.SetActive(State);
+            }
         }
 
         /// <summary>
         /// Exposed event to toggle all known gameobjects
         /// </summary>
-        public void Toggle()
+        public void _Toggle()
         {
-            SyncedState = !SyncedState;
-            RequestSerialization();
+            State = !State;
+            OwnershipTransferAndSync();
+            SetActiveStates();
         }
 
         /// <summary>
         /// Exposed event to turn all known gameobjects on
         /// </summary>
-        public void TurnOn()
+        public void _TurnOn()
         {
-            SyncedState = true;
-            RequestSerialization();
+            State = true;
+            OwnershipTransferAndSync();
+            SetActiveStates();
         }
 
         /// <summary>
         /// Exposed event to turn all known gameobjects off
         /// </summary>
-        public void TurnOff()
+        public void _TurnOff()
         {
-            SyncedState = false;
-            RequestSerialization();
+            State = false;
+            OwnershipTransferAndSync();
+            SetActiveStates();
         }
 
         #region Synchronization for late players
         public override void OnPlayerJoined(VRCPlayerApi player)
         {
-            SendCustomEventDelayedSeconds("SyncLatePlayer", 2.5F, EventTiming.Update);
+            if (Networking.LocalPlayer.IsOwner(gameObject))
+            {
+                SendCustomEventDelayedSeconds("_SyncLatePlayer", 2.5F, EventTiming.Update);
+            }
         }
 
-        public void SyncLatePlayer()
+        public void _SyncLatePlayer()
         {
             RequestSerialization();
         }
@@ -91,10 +98,7 @@ namespace OttrOne.UdonToolbox
 
         public override void OnDeserialization()
         {
-            foreach (GameObject target in Targets)
-            {
-                target.SetActive(SyncedState);
-            }
+            SetActiveStates();
         }
     }
 }
