@@ -31,10 +31,12 @@ namespace OttrOne.UdonToolbox
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class RestrictedToggle : UdonSharpBehaviour
     {
-        [TextArea]
-        public string[] Usernames;
-        public bool IncludeMaster;
-        public GameObject[] Targets;
+        [TextArea, SerializeField]
+        private string[] Usernames;
+        [SerializeField]
+        private bool IncludeMaster;
+        [SerializeField]
+        private GameObject[] Targets;
 
         /// <summary>
         /// Filter username teextbox by linebreak and compare the names with the local user.
@@ -43,8 +45,6 @@ namespace OttrOne.UdonToolbox
         /// </summary>
         void Start()
         {
-            //string[] names = Usernames.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-
             if (
                 Array.IndexOf(Usernames, Networking.LocalPlayer.displayName) != -1
                 || (Networking.LocalPlayer.isMaster && IncludeMaster)

@@ -16,62 +16,59 @@
 
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 
 namespace OttrOne.UdonToolbox
 {
+    /// <summary>
+    /// Simple script to teleport the local player to a given position (and rotation)
+    /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class LocalTrigger : UdonSharpBehaviour
+    public class PlayerTeleport : UdonSharpBehaviour
     {
+        /// <summary>
+        /// Position and rotation data the player will be teleported to
+        /// </summary>
         [SerializeField]
-        private GameObject[] Targets;
-
-        [SerializeField]
-        private bool ExposeEventsToNetwork = false;
+        private Transform[] SpawnPoints;
 
         /// <summary>
-        /// React to interaction events on the parent gameobject
+        /// teleport when leaving a collider
+        /// </summary>
+        [SerializeField, Tooltip("Teleport when leaving a collider.")]
+        private bool ReactToTrigger = false;
+
+        /// <summary>
+        /// Trigger teleportation by interacting with the gameobject
         /// </summary>
         public override void Interact()
         {
-            this._toggle();
+            this.TeleportToSpawn();
         }
 
         /// <summary>
-        /// Exposed event to toggle all known gameobjects
+        /// Trigger teleportation by receiving the local event string
         /// </summary>
-        public void Toggle() { if (ExposeEventsToNetwork) this._Toggle(); }
-        public void _Toggle() { this._toggle(); }
-
-        /// <summary>
-        /// Exposed event to turn all known gameobjects on
-        /// </summary>
-        public void TurnOn() { if (ExposeEventsToNetwork) this._TurnOn(); }
-        public void _TurnOn()
+        public void _Teleport()
         {
-            foreach (GameObject target in Targets)
-            {
-                target.SetActive(true);
-            }
+            this.TeleportToSpawn();
         }
 
         /// <summary>
-        /// Exposed event to turn all known gameobjects off
+        /// Trigger teleportation by leaving a trigger collider
         /// </summary>
-        public void TurnOff() { if (ExposeEventsToNetwork) this._TurnOff(); }
-        public void _TurnOff()
+        public override void OnPlayerTriggerExit(VRCPlayerApi player)
         {
-            foreach (GameObject target in Targets)
-            {
-                target.SetActive(false);
-            }
+            if (player.isLocal && ReactToTrigger) this.TeleportToSpawn();
         }
 
-        private void _toggle()
+        /// <summary>
+        /// Teleport the player
+        /// </summary>
+        private void TeleportToSpawn()
         {
-            foreach (GameObject target in Targets)
-            {
-                target.SetActive(!target.activeSelf);
-            }
+            int rnd = Random.Range(0, SpawnPoints.Length - 1);
+            Networking.LocalPlayer.TeleportTo(SpawnPoints[rnd].position, SpawnPoints[rnd].rotation);
         }
     }
 }

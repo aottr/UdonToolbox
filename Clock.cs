@@ -16,62 +16,62 @@
 
 using UdonSharp;
 using UnityEngine;
+using TMPro;
+using System;
 
 namespace OttrOne.UdonToolbox
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class LocalTrigger : UdonSharpBehaviour
+    public class Clock : UdonSharpBehaviour
     {
         [SerializeField]
-        private GameObject[] Targets;
-
+        private bool ShowSeconds = false;
         [SerializeField]
-        private bool ExposeEventsToNetwork = false;
-
-        /// <summary>
-        /// React to interaction events on the parent gameobject
-        /// </summary>
-        public override void Interact()
+        private bool Show24hFormat = false;
+        [SerializeField]
+        private bool PlayerLocalTime = true;
+        [SerializeField]
+        private int UTCOffset = 0;
+        [SerializeField]
+        private TextMeshProUGUI TextMeshPro;
+        public override void PostLateUpdate()
         {
-            this._toggle();
-        }
+            DateTime dt;
+            if (PlayerLocalTime)
+                dt = DateTime.Now;
+            else
+                dt = DateTime.UtcNow.AddHours(UTCOffset);
 
-        /// <summary>
-        /// Exposed event to toggle all known gameobjects
-        /// </summary>
-        public void Toggle() { if (ExposeEventsToNetwork) this._Toggle(); }
-        public void _Toggle() { this._toggle(); }
-
-        /// <summary>
-        /// Exposed event to turn all known gameobjects on
-        /// </summary>
-        public void TurnOn() { if (ExposeEventsToNetwork) this._TurnOn(); }
-        public void _TurnOn()
-        {
-            foreach (GameObject target in Targets)
+            string time = "";
+            if (Show24hFormat)
             {
-                target.SetActive(true);
+                time = $"{LeadingZero(dt.Hour)}";
             }
-        }
-
-        /// <summary>
-        /// Exposed event to turn all known gameobjects off
-        /// </summary>
-        public void TurnOff() { if (ExposeEventsToNetwork) this._TurnOff(); }
-        public void _TurnOff()
-        {
-            foreach (GameObject target in Targets)
+            else
             {
-                target.SetActive(false);
+                if (dt.Hour % 12 == 0) time = "12";
+                else time = $"{LeadingZero(dt.Hour % 12)}";
             }
-        }
 
-        private void _toggle()
-        {
-            foreach (GameObject target in Targets)
+            time += $":{ LeadingZero(dt.Minute)}";
+
+            if (ShowSeconds) time += $":{LeadingZero(DateTime.Now.Second)}";
+
+            if (!Show24hFormat)
             {
-                target.SetActive(!target.activeSelf);
+                if (dt.Hour <= 11) time += " AM";
+                else time += " PM";
             }
+
+            TextMeshPro.text = time;
+        }
+        private string LeadingZero(int number)
+        {
+            return number.ToString().PadLeft(2, '0');
+        }
+        void Start()
+        {
+            TextMeshPro.text = "00:00:00";
         }
     }
 }
