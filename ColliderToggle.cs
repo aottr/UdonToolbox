@@ -26,7 +26,7 @@ namespace OttrOne.UdonToolbox
 	/// Example usages are mirrors that only activate in certain areas.
 	/// </summary>
 	[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-	public class ColliderTrigger : UdonSharpBehaviour
+	public class ColliderToggle : UdonSharpBehaviour
 	{
 		public GameObject[] Targets;
 
