@@ -26,8 +26,17 @@ namespace OttrOne.UdonToolbox
     {
         public GameObject[] Targets;
 
-        [UdonSynced]
+        [UdonSynced, HideInInspector]
         public bool State;
+
+        /// <summary>
+        /// Set start state to active state of first object
+        /// </summary>
+        public void Start()
+        {
+            if (Targets.Length > 0)
+                State = Targets[0].activeSelf;
+        }
 
         /// <summary>
         /// React to interaction events on the parent gameobject
